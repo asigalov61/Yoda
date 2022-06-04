@@ -196,7 +196,7 @@ for f in tqdm(filez[:int(len(filez) * dataset_ratio)]):
         
         for e in events_matrix1:
             e[1] = int(e[1] / 16)
-            e[2] = int(e[2] / 256)
+            e[2] = int(e[2] / 128)
         
         # final processing...
 
@@ -282,7 +282,7 @@ for chords_list in tqdm(melody_chords_f):
             train_data1.extend([i[0]]) # start-times
             
         # And this is the main MIDI note line (triple stack)
-        train_data1.extend([i[1] + (i[3] * 10) + (i[2] * 10 * 16)]) # duration / channel / pitch
+        train_data1.extend([i[1] + (i[3] * 16) + (i[2] * 11 * 16)]) # duration / channel / pitch
 
 print('=' * 70)
 print('Done!')        
@@ -379,6 +379,7 @@ train_data[:15]
 out = train_data[:16000]
 
 if len(out) != 0:
+    
     song = out
     song_f = []
     time = 0
@@ -386,17 +387,17 @@ if len(out) != 0:
     vel = 0
     pitch = 0
     channel = 0
+    
     for s in song:
-        if s >= 0 and s < 256:
+        if s < 256:
             time += s * 16
             
-        if s >= 256:
-            channel = (s // 10) % 16
+        else:
+            channel = (s // 16) % 11
 
-            pitch = (s // 10) // 16
+            pitch = s // 16 // 11
             
-            dur = ((s % 10) * 256) + 256
-            
+            dur = ((s % 16) * 128) + 128
             
             # Velocities for each channel:
             if channel == 0:  # Piano     
