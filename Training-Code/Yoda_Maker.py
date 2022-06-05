@@ -209,11 +209,11 @@ for f in tqdm(filez[:int(len(filez) * dataset_ratio)]):
             melody_chords = []
             for e in events_matrix1:
 
-                time = min(255, e[1]-pe[1])
-                dur = min(15, e[2])
-                cha = e[3]
-                ptc = min(127, e[4])
-                vel = min(127, e[5])
+                time = max(0, min(255, e[1]-pe[1]))
+                dur = max(0, min(15, e[2]))
+                cha = max(0, min(15, e[3]))
+                ptc = max(0, min(127, e[4]))
+                vel = max(0, min(127, e[5]))
 
                 melody_chords.append([time, dur, ptc, cha, vel])
 
