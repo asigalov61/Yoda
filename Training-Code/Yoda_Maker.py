@@ -282,7 +282,7 @@ for chords_list in tqdm(melody_chords_f):
             train_data1.extend([i[0]]) # start-times
             
         # And this is the main MIDI note line (triple stack)
-        train_data1.extend([i[1] + (i[3] * 16) + (i[2] * 11 * 16)]) # duration / channel / pitch
+        train_data1.extend([i[1] + (i[2] * 16) + (i[3] * 16 * 128)]) # duration / pitch / channel
 
 print('=' * 70)
 print('Done!')        
@@ -393,9 +393,9 @@ if len(out) != 0:
             time += s * 16
             
         else:
-            channel = (s // 16) % 11
+            channel = s // 16 // 128
 
-            pitch = s // 16 // 11
+            pitch = (s // 16) % 128
             
             dur = ((s % 16) * 128) + 128
             
