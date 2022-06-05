@@ -427,7 +427,7 @@ if len(out) != 0:
 
     detailed_stats = TMIDIX.Tegridy_SONG_to_MIDI_Converter(song_f,
                                                         output_signature = 'Yoda',  
-                                                        output_file_name = 'C:/Users/asiga/Desktop/Yoda-Music-Composition', 
+                                                        output_file_name = '/notebooks/Yoda-Music-Composition', 
                                                         track_name='Project Los Angeles',
                                                         list_of_MIDI_patches=[0, 24, 32, 40, 42, 46, 56, 71, 73, 0, 53, 0, 0, 0, 0, 0],
                                                         number_of_ticks_per_quarter=500)
