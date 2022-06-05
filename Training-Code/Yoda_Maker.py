@@ -269,22 +269,37 @@ melody_chords_f = TMIDIX.Tegridy_Any_Pickle_File_Reader('/notebooks/Yoda_Data')
 
 # Process and prep INTs...
 
+randomize_dataset = True
+
 print('=' * 70)
-print('Prepping INTs datasets...')
+print('Prepping INTs dataset...')
+
+if randomize_dataset:
+    print('=' * 70)
+    print('Randomizing the dataset...')
+    random.shuffle(melody_chords_f)
+    print('Done!')
+    
+print('=' * 70)
+print('Processing the dataset...')
 
 train_data1 = []
 
 for chords_list in tqdm(melody_chords_f):
-
+    
+    train_data1.extend([0]) # Intro/Zero Token
+    
     for i in chords_list:
 
         if i[0] != 0: # This is the chordification line
             train_data1.extend([i[0]]) # start-times
             
         # And this is the main MIDI note line (triple stack)
-        train_data1.extend([i[1] + (i[2] * 16) + (i[3] * 16 * 128)]) # duration / pitch / channel
+        main_note = [i[1] + (i[2] * 16) + (i[3] * 16 * 128)] # Main note == [duration / pitch / channel]
+        
+        if main_note != [0]: # Main note error control...
+            train_data1.extend(main_note) # Main note == [duration / pitch / channel]
 
-print('=' * 70)
 print('Done!')        
 print('=' * 70)
         
@@ -292,6 +307,7 @@ print('Total INTs:', len(train_data1))
 print('Minimum INT:', min(train_data1))
 print('Maximum INT:', max(train_data1))
 print('Unique INTs:', len(set(train_data1)))
+print('Intro/Zero INTs:', train_data1.count(0))
 print('=' * 70)
 
 
