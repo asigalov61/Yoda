@@ -1,5 +1,5 @@
 # Yoda
-## [PREVIEW] Morpheus implementation spin-off :)
+## Morpheus Music AI implementation spin-off :)
 
 ***
 
