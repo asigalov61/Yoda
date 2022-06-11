@@ -405,7 +405,7 @@ model = SinkhornTransformerLM(
     n_local_attn_heads = 4
 )
 model = AutoregressiveWrapper(model)
-#model.cuda()
+model.cuda()
 
 # prepare training data...
 
