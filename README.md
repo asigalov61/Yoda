@@ -1,5 +1,5 @@
 # Yoda
-## “Always pass on what you have learned.”. — Yoda.
+## “Always pass on what you have learned” --- Yoda
 
 ***
 
