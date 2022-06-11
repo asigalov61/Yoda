@@ -372,13 +372,16 @@ if len(out) != 0:
 
 # constants
 
-NUM_BATCHES = int(1e5)
-BATCH_SIZE = 4
+
+BATCH_SIZE = 128
+
+NUM_BATCHES = int(len(train_data1) / BATCH_SIZE)
+
 GRADIENT_ACCUMULATE_EVERY = 4
 LEARNING_RATE = 1e-4
-VALIDATE_EVERY  = 100
-GENERATE_EVERY  = 500
-GENERATE_LENGTH = 512
+VALIDATE_EVERY  = 50
+GENERATE_EVERY  = 100
+GENERATE_LENGTH = 256
 SEQ_LEN = 1024
 
 # helpers
@@ -410,7 +413,7 @@ model.cuda()
 # prepare training data...
 
 X = train_data1
-trX, vaX = np.split(X, [len(train_data1)-1000])
+trX, vaX = np.split(X, [len(train_data1)-8192])
 data_train, data_val = torch.from_numpy(trX), torch.from_numpy(vaX)
 
 class TextSamplerDataset(Dataset):
@@ -462,8 +465,9 @@ for i in tqdm.tqdm(range(NUM_BATCHES), mininterval=10., desc='Training'):
         model.eval()
         inp = random.choice(val_dataset)[:-1]
         print('Testing...')
+        print('Input:', inp[:8])
         sample = model.generate(inp, GENERATE_LENGTH)
-        print(sample)
+        print('Output:', sample[:8])
         print('Done!')
 
     if i % GENERATE_EVERY == 0:
