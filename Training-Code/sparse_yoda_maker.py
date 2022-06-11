@@ -373,7 +373,7 @@ if len(out) != 0:
 # constants
 
 
-BATCH_SIZE = 128
+BATCH_SIZE = 4
 
 NUM_BATCHES = int(len(train_data1) / BATCH_SIZE)
 
@@ -381,8 +381,8 @@ GRADIENT_ACCUMULATE_EVERY = 4
 LEARNING_RATE = 1e-4
 VALIDATE_EVERY  = 50
 GENERATE_EVERY  = 100
-GENERATE_LENGTH = 256
-SEQ_LEN = 1024
+GENERATE_LENGTH = 200
+SEQ_LEN = 4096
 
 # helpers
 
@@ -397,7 +397,7 @@ model = SinkhornTransformerLM(
     num_tokens = max(train_data1)+1,
     emb_dim = 128,
     dim = 512,
-    depth = 6,
+    depth = 8,
     max_seq_len = SEQ_LEN,
     heads = 8,
     bucket_size = 128,
