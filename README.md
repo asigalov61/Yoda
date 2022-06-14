@@ -26,6 +26,15 @@
 
 ***
 
+### Sparse Version [WIP]
+
+[![Open In Colab][colab-badge]][colab-notebook2]
+
+[colab-notebook2]: <https://colab.research.google.com/github/asigalov61/Yoda/blob/main/Sparse_Yoda.ipynb>
+[colab-badge]: <https://colab.research.google.com/assets/colab-badge.svg>
+
+***
+
 ### Project Los Angeles
 
 ### Tegridy Code 2022
