@@ -103,47 +103,6 @@ print('=' * 70)
 
 """# (LOAD)"""
 
-#@title Load/Reload the model
-
-from collections import OrderedDict
-
-full_path_to_model_checkpoint = "/content/Sparse-Yoda-Trained-Model.pth" #@param {type:"string"}
-
-print('Loading the model...')
-# constants
-
-NUM_BATCHES = int(1e5)
-BATCH_SIZE = 4
-GRADIENT_ACCUMULATE_EVERY = 4
-LEARNING_RATE = 1e-4
-VALIDATE_EVERY  = 100
-GENERATE_EVERY  = 500
-GENERATE_LENGTH = 512
-SEQ_LEN = 1024
-
-model = SinkhornTransformerLM(
-    num_tokens = 1905,
-    emb_dim = 128,
-    dim = 512,
-    depth = 16,
-    max_seq_len = SEQ_LEN,
-    heads = 16,
-    bucket_size = 128,
-    ff_chunks = 2,
-    causal = True,
-    reversible = True,
-    attn_dropout = 0.1,
-    n_local_attn_heads = 4
-)
-
-model = AutoregressiveWrapper(model)
-model.cuda()
-
-model.load_state_dict(torch.load(full_path_to_model_checkpoint))
-model.eval()
-
-print('Done!')
-
 #@title Load and prep the original training data which will be used to prime the model
 full_path_to_original_training_data = "/content/Sparse-Yoda-Train-Data" #@param {type:"string"}
 
@@ -197,16 +156,152 @@ print('Unique INTs:', len(set(train_data1)))
 print('Intro/Zero INTs:', train_data1.count(0))
 print('=' * 70)
 
+#@title Load/Reload the model
+
+from collections import OrderedDict
+
+full_path_to_model_checkpoint = "/content/Sparse-Yoda-Trained-Model.pth" #@param {type:"string"}
+
+print('Loading the model...')
+# constants
+
+NUM_BATCHES = int(1e5)
+BATCH_SIZE = 4
+GRADIENT_ACCUMULATE_EVERY = 4
+LEARNING_RATE = 1e-4
+VALIDATE_EVERY  = 100
+GENERATE_EVERY  = 500
+GENERATE_LENGTH = 512
+SEQ_LEN = 1024
+
+model = SinkhornTransformerLM(
+    num_tokens = max(train_data1)+1,
+    emb_dim = 128,
+    dim = 512,
+    depth = 16,
+    max_seq_len = SEQ_LEN,
+    heads = 16,
+    bucket_size = 128,
+    ff_chunks = 2,
+    causal = True,
+    reversible = True,
+    attn_dropout = 0.1,
+    n_local_attn_heads = 4
+)
+
+model = AutoregressiveWrapper(model)
+model.cuda()
+
+model.load_state_dict(torch.load(full_path_to_model_checkpoint))
+model.eval()
+
+print('Done!')
+
 """# (GENERATE MUSIC)
 
 ### NOTE: Due to the size of the DEMO model and the dataset, the output may not be very good because Sparse Transformer needs large ammount of data (music) to produce good results.
+
+# Custom MIDI option
 """
 
+f = '/content/Yoda/seed.mid'
+
+score = TMIDIX.midi2ms_score(open(f, 'rb').read())
+
+events_matrix = []
+
+itrack = 1
+
+patches = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+patch_map = [[0, 1, 2, 3, 4, 5, 6, 7], # Piano 
+              [24, 25, 26, 27, 28, 29, 30], # Guitar
+              [32, 33, 34, 35, 36, 37, 38, 39], # Bass
+              [40, 41], # Violin
+              [42, 43], # Cello
+              [46], # Harp
+              [56, 57, 58, 59, 60], # Trumpet
+              [71, 72], # Clarinet
+              [73, 74, 75], # Flute
+              [-1], # Fake Drums
+              [52, 53] # Choir
+            ]
+
+while itrack < len(score):
+    for event in score[itrack]:         
+        if event[0] == 'note' or event[0] == 'patch_change':
+            events_matrix.append(event)
+    itrack += 1
+
+events_matrix1 = []
+for event in events_matrix:
+        if event[0] == 'patch_change':
+            patches[event[2]] = event[3]
+
+        if event[0] == 'note':
+            event.extend([patches[event[3]]])
+            once = False
+            
+            for p in patch_map:
+                if event[6] in p and event[3] != 9: # Except the drums
+                    event[3] = patch_map.index(p)
+                    once = True
+                    
+            if not once and event[3] != 9: # Except the drums
+                event[3] = 0 # All other instruments/patches channel
+                event[5] = max(80, event[5])
+                
+            if event[3] < 11: # We won't write chans 11-16 for now...
+                events_matrix1.append(event)
+                #stats[event[3]] += 1
+
+# recalculating timings
+
+for e in events_matrix1:
+    e[1] = int(e[1] / 16)
+    e[2] = int(e[2] / 128)
+
+# final processing...
+
+if len(events_matrix1) > 0:
+    
+    events_matrix1.sort(key=lambda x: (x[1], x[4]))
+
+    cho = []
+    pe = events_matrix1[0]
+    melody_chords = []
+    for e in events_matrix1:
+
+        time = max(0, min(255, e[1]-pe[1]))
+        dur = max(0, min(15, e[2]))
+        cha = max(0, min(15, e[3]))
+        ptc = max(0, min(127, e[4]))
+        vel = max(0, min(127, e[5]))
+
+        melody_chords.append([time, dur, ptc, cha, vel])
+
+        pe = e
+inputs = []
+for i in melody_chords:
+
+  if i[0] != 0: # This is the chordification line
+      inputs.extend([i[0]]) # start-times
+      
+  # And this is the main MIDI note line (triple stack)
+  main_note = [i[1] + (i[2] * 16) + (i[3] * 16 * 128)] # Main note == [duration / pitch / channel]
+  
+  if main_note != [0]: # Main note error control...
+      inputs.extend(main_note) # Main note == [duration / pitch / channel]
+
+"""# Generate"""
+
 r = random.randint(0, int(len(train_data1) / 1))
+#r = 0
 out = train_data1[r:r+512]
+#out = inputs[:512]
 out1 = []
 #out1.extend(out)
-sample = model.generate(torch.LongTensor(out).cuda(), 256, temperature=0.6)
+sample = model.generate(torch.LongTensor(out).cuda(), 256, temperature=0.8)
 
 out2 = sample.cpu().numpy().tolist()
 out1.extend(out2)
