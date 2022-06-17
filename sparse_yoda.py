@@ -42,6 +42,7 @@ WARNING: This complete implementation is a functioning model of the Artificial I
 
 !pip install torch
 !pip install tqdm
+!pip install pickle5
 !pip install matplotlib
 
 !apt install fluidsynth #Pip does not work for some reason. Only apt works
@@ -55,6 +56,7 @@ import os
 import copy
 import random
 import tqdm
+import pickle5 as pickle
 
 from sinkhorn_transformer import SinkhornTransformerLM
 from sinkhorn_transformer.autoregressive_wrapper import AutoregressiveWrapper
@@ -104,9 +106,9 @@ print('=' * 70)
 """# (LOAD)"""
 
 #@title Load and prep the original training data which will be used to prime the model
-full_path_to_original_training_data = "/content/Sparse-Yoda-Train-Data" #@param {type:"string"}
+full_path_to_original_training_data = "/content/Sparse-Yoda-Train-Data.pickle" #@param {type:"string"}
 
-melody_chords_f = TMIDIX.Tegridy_Any_Pickle_File_Reader(full_path_to_original_training_data)
+melody_chords_f = pickle.load(open(full_path_to_original_training_data, 'rb'))
 
 randomize_dataset = False
 
@@ -172,12 +174,12 @@ LEARNING_RATE = 1e-4
 VALIDATE_EVERY  = 100
 GENERATE_EVERY  = 500
 GENERATE_LENGTH = 512
-SEQ_LEN = 1024
+SEQ_LEN = 4096
 
 model = SinkhornTransformerLM(
     num_tokens = max(train_data1)+1,
     emb_dim = 128,
-    dim = 512,
+    dim = 1024,
     depth = 16,
     max_seq_len = SEQ_LEN,
     heads = 16,
@@ -199,14 +201,13 @@ print('Done!')
 
 """# (GENERATE MUSIC)
 
-### NOTE: Due to the size of the DEMO model and the dataset, the output may not be very good because Sparse Transformer needs large ammount of data (music) to produce good results.
-
 # Custom MIDI option
 """
 
-f = '/content/Yoda/seed.mid'
+#@title Custom MIDI
+full_path_to_custom_MIDI = "/content/Yoda/seed4.mid" #@param {type:"string"}
 
-score = TMIDIX.midi2ms_score(open(f, 'rb').read())
+score = TMIDIX.midi2ms_score(open(full_path_to_custom_MIDI, 'rb').read())
 
 events_matrix = []
 
@@ -293,15 +294,30 @@ for i in melody_chords:
   if main_note != [0]: # Main note error control...
       inputs.extend(main_note) # Main note == [duration / pitch / channel]
 
+print('Done!')
+
 """# Generate"""
 
-r = random.randint(0, int(len(train_data1) / 1))
-#r = 0
-out = train_data1[r:r+512]
-#out = inputs[:512]
+#@title Generate
+priming_type = "Custom MIDI" #@param ["Custom MIDI", "Random Dataset Point"]
+number_of_prime_tokens = 256 #@param {type:"slider", min:32, max:512, step:32}
+number_of_tokens_to_generate = 256 #@param {type:"slider", min:64, max:512, step:64}
+temperature = 0.8 #@param {type:"slider", min:0.1, max:1, step:0.1}
+
+
+if priming_type == 'Random Dataset Point':
+  # Random dataset point
+  r = random.randint(0, int(len(train_data1) / 1))
+  out = train_data1[r:r+number_of_prime_tokens]
+
+else:
+  # Custom MIDI line
+  out = inputs[:number_of_prime_tokens] 
+
 out1 = []
-#out1.extend(out)
-sample = model.generate(torch.LongTensor(out).cuda(), 256, temperature=0.8)
+out1.extend(out)
+
+sample = model.generate(torch.LongTensor(out).cuda(), number_of_tokens_to_generate, temperature=temperature)
 
 out2 = sample.cpu().numpy().tolist()
 out1.extend(out2)
