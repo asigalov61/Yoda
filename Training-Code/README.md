@@ -5,7 +5,7 @@
 ## Two versions to choose from:
 
 ### 1) Yoda_Maker = OpenAI's GPT3 + Google's RGA(RPR)
-#### This version is great for small-scale models and small-scale datasets
+#### This version is great for any sized dataset now! Enjoy!
 
 [![Open In Colab][colab-badge]][colab-notebook]
 
@@ -13,7 +13,7 @@
 [colab-badge]: <https://colab.research.google.com/assets/colab-badge.svg>
 
 ### 2) Sparse_Yoda_Maker = Sparse Transformer technology which was used to create OpenAI's MuseNet
-#### This version is absolutely required for large-scale models and large-scale datasets
+#### This version uses Sparse Attention that sometimes shows better results with music
 
 [![Open In Colab][colab-badge]][colab-notebook2]
 
