@@ -306,15 +306,13 @@ class MusicSamplerDataset(Dataset):
         self.seq_len = seq_len
 
     def __getitem__(self, index):
-        rand = random.randint(0, (self.data.size(0)-self.seq_len) // self.seq_len) * self.seq_len
+        rand = index * 4
         x = self.data[rand: rand + self.seq_len].long()
         trg = self.data[(rand+1): (rand+1) + self.seq_len].long()
-        #print(rand)
-        #print(len(x), len(trg))
         return x, trg
 
     def __len__(self):
-        return self.data.size(0)
+        return (self.data.size(0) - self.seq_len) // 4
 
 train_dataset = MusicSamplerDataset(data_train, SEQ_LEN)
 val_dataset   = MusicSamplerDataset(data_val, SEQ_LEN)
