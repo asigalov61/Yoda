@@ -239,6 +239,27 @@ print('Choir:', stats[10])
 
 print('=' * 70)
 
+# More dataset stats...
+
+times = []
+durs = []
+pitches = []
+
+for chords_list in tqdm(melody_chords_f):
+    for c in chords_list:
+      times.append(c[0])
+      durs.append(c[1])
+      pitches.append(c[2])
+
+tavg = sum(times) / len(times)
+davg = sum(durs) / len(durs)
+pavg = sum(pitches) / len(pitches)
+
+print('Average time-shift', tavg)
+print('Average duration', davg)
+print('Average pitch', pavg)
+print('=' * 70)
+
 TMIDIX.Tegridy_Any_Pickle_File_Writer(melody_chords_f, '/content/Yoda_Data')
 
 melody_chords_f = TMIDIX.Tegridy_Any_Pickle_File_Reader('/content/Yoda_Data')
@@ -297,7 +318,7 @@ BATCH_SIZE = 16 # Change this to your specs
 print('=' * 50)
 print('Loading training data...')
 
-data_train, data_val = torch.LongTensor(train_data1), torch.LongTensor(train_data1)
+data_train, data_val = torch.LongTensor(train_data1[:-(SEQ_LEN * BATCH_SIZE)]), torch.LongTensor(train_data1[-(SEQ_LEN * BATCH_SIZE)-1:])
 
 class MusicSamplerDataset(Dataset):
     def __init__(self, data, seq_len):
@@ -306,13 +327,13 @@ class MusicSamplerDataset(Dataset):
         self.seq_len = seq_len
 
     def __getitem__(self, index):
-        rand = index * 4
+        rand = random.randint(0, (self.data.size(0)-self.seq_len) // self.seq_len) * self.seq_len
         x = self.data[rand: rand + self.seq_len].long()
         trg = self.data[(rand+1): (rand+1) + self.seq_len].long()
         return x, trg
 
     def __len__(self):
-        return (self.data.size(0) - self.seq_len) // 4
+        return self.data.size(0)
 
 train_dataset = MusicSamplerDataset(data_train, SEQ_LEN)
 val_dataset   = MusicSamplerDataset(data_val, SEQ_LEN)
