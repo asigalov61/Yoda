@@ -288,18 +288,9 @@ print('=' * 70)
 
 #@title Load processed INTs dataset
 
-SEQ_LEN = max_seq 
+SEQ_LEN = max_seq
 
-########################################################################
-
-# THIS CONSTANT IS VERY IMPORTANT FOR CONVERGENCE !!!
-# TRY TO MAXIMIZE THIS NUMBER DEPENDING ON YOUR MODEL SIZE/DATASET SIZE
-
-SEQ2SEQ_WINDOW = 4 * 16 # Length of one note in tokens * number of notes
-
-########################################################################
-
-BATCH_SIZE = 1 # Change this to your specs
+BATCH_SIZE = 16 # Change this to your specs
 
 # DO NOT FORGET TO ADJUST MODEL PARAMS IN GPT2RGAX module to your specs
 
@@ -315,13 +306,13 @@ class MusicSamplerDataset(Dataset):
         self.seq_len = seq_len
 
     def __getitem__(self, index):
-
-        x = self.data[(index * SEQ2SEQ_WINDOW): (index * SEQ2SEQ_WINDOW) + self.seq_len].long()
-        trg = self.data[((index+1) * SEQ2SEQ_WINDOW): ((index+1) * SEQ2SEQ_WINDOW) + self.seq_len].long()
+        rand = random.randint(0, self.data.size(0) // self.seq_len) * self.seq_len
+        x = self.data[rand: rand + self.seq_len].long()
+        trg = self.data[(rand+1): (rand+1) + self.seq_len].long()
         return x, trg
 
     def __len__(self):
-        return self.data.size(0) // SEQ2SEQ_WINDOW
+        return self.data.size(0)
 
 train_dataset = MusicSamplerDataset(data_train, SEQ_LEN)
 val_dataset   = MusicSamplerDataset(data_val, SEQ_LEN)
